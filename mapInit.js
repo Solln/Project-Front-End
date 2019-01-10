@@ -5,6 +5,10 @@ let flightPath = [];
 let labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 let labelIndex = 0;
 
+let mapState = 0;
+
+let markersPlaceable = true;
+
 function initMap() {
 
     //Default Location
@@ -30,7 +34,9 @@ function initMap() {
 
     // This event listener will call addMarker() when the map is clicked.
     map.addListener('click', function (event) {
-        addMarker(event.latLng);
+        if (markersPlaceable === true) {
+            addMarker(event.latLng);
+        }
     });
 
 }
@@ -44,28 +50,28 @@ function addMarker(location) {
     var marker = new google.maps.Marker({
         position: location,
         label: labels[labelIndex++ % labels.length],
-        // draggable: true,
+        draggable: true,
         map: map
     });
     markers.push(marker);
 
-    //Constructs the infoWindow's properties
-    var infoWindow = new google.maps.InfoWindow({
-        content: '<p>Lat: '+ location.lat().toFixed(4) + '</p> <p>Lng: ' + location.lng().toFixed(4) + '<p>Index: ' + labelIndex + '</p>',
-        maxWidth: 200
-    });
-
-    // Adds a click listener for the infoWindow / Will change this later to grab marker details and remove from array
     marker.addListener('click', function() {
-        infoWindow.open(map, marker);
+        deleteMarker(labels.indexOf(marker.label));
     });
 
-    // marker.addListener('click', function() {
-    //     deleteMarker(infowindow.content);
-    // });
+
+    // Show new coords + marker index
+    marker.addListener('dragend', handleEvent);
+
+    function handleEvent(event) {
+        console.log(event.latLng.lat().toFixed(4));
+        console.log(event.latLng.lng().toFixed(4));
+        console.log("Index: " + labels.indexOf(marker.label));
+    }
+
+    mapState = 1;
 
 }
-
 
 // Sets the map on all markers in the array.
 function setMapOnAll(map) {
@@ -76,9 +82,27 @@ function setMapOnAll(map) {
 
 // Removes both Markers and Lines from the map
 function deleteBoth() {
-    deleteMarkers();
-    deleteLines();
-    labelIndex = 0;
+
+    if (mapState === 1){
+        deleteMarkers();
+        labelIndex = 0;
+        mapState = 0;
+    }else {
+        deleteMarkers();
+        deleteLines();
+        labelIndex = 0;
+        mapState = 0;
+    }
+
+    document.getElementById("calcButton").disabled = false;
+    document.getElementById("calcButton").classList.remove("btn-secondary");
+    document.getElementById("calcButton").classList.add("btn-primary");
+
+    document.getElementById("clearButton").classList.remove("btn-primary");
+    document.getElementById("clearButton").classList.add("btn-secondary");
+
+    markersPlaceable = true;
+
 }
 
 
@@ -110,8 +134,10 @@ function drawLine() {
     var flightPlanCoordinates = [];
 
     for (ayy of markers) {
-        console.log(ayy.getPosition().lat().toFixed(4));
-        console.log(ayy.getPosition().lng().toFixed(4));
+        console.log('Label: ' + ayy.label);
+        console.log('Lat: ' + ayy.getPosition().lat().toFixed(4));
+        console.log('Lng: ' + ayy.getPosition().lng().toFixed(4));
+        console.log('---------------------')
         flightPlanCoordinates.push({
             lat: parseFloat(ayy.getPosition().lat().toFixed(4)),
             lng: parseFloat(ayy.getPosition().lng().toFixed(4))
@@ -130,4 +156,17 @@ function drawLine() {
 
     // Removes the markers visuals
     deleteMarkers();
+
+
+    document.getElementById("calcButton").disabled = true;
+    document.getElementById("calcButton").classList.remove("btn-primary");
+    document.getElementById("calcButton").classList.add("btn-secondary");
+
+    document.getElementById("clearButton").disabled = false;
+    document.getElementById("clearButton").classList.remove("btn-secondary");
+    document.getElementById("clearButton").classList.add("btn-primary");
+
+    mapState = 2;
+    markersPlaceable = false;
+
 }
