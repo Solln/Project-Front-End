@@ -25,12 +25,11 @@ function initMap() {
         // Center on user's current location if geolocation prompt allowed
         startLocation = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
         map.setCenter(startLocation);
-        addMarker(startLocation);
+        //addMarker(startLocation);
     }, function (positionError) {
         // User denied geolocation prompt - default to Glasgow
         map.setCenter(new google.maps.LatLng(56.4907, -4.2026));
     });
-
 
     // This event listener will call addMarker() when the map is clicked.
     map.addListener('click', function (event) {
@@ -39,6 +38,8 @@ function initMap() {
         }
     });
 
+    addYourLocationButton(map);
+    addSearchBar(map);
 }
 
 // Adds a marker to the map and push to the array.
@@ -55,7 +56,7 @@ function addMarker(location) {
     });
     markers.push(marker);
 
-    marker.addListener('click', function() {
+    marker.addListener('click', function () {
         deleteMarker(labels.indexOf(marker.label));
     });
 
@@ -83,11 +84,11 @@ function setMapOnAll(map) {
 // Removes both Markers and Lines from the map
 function deleteBoth() {
 
-    if (mapState === 1){
+    if (mapState === 1) {
         deleteMarkers();
         labelIndex = 0;
         mapState = 0;
-    }else {
+    } else {
         deleteMarkers();
         deleteLines();
         labelIndex = 0;
@@ -131,6 +132,21 @@ function deleteLines() {
 // Draws the Polyline between all the markers in the markers array
 function drawLine() {
 
+    // makeCorsRequest("http://localhost:8080/testReturn?name=Jack");
+
+    var fruits = ["Banana", "Orange", "Apple", "Mango"];
+    fruits.toString(); coords = ["Darren", "Jack", "David"];
+
+    let markerString = "";
+    for (mark of markers){
+        markerString = markerString + mark.getPosition().lat().toFixed(4) + ",";
+        markerString = markerString + mark.getPosition().lng().toFixed(4) + "/";
+    }
+
+    //Get the reurn from this and use it to set the coords for the flightplan
+    makeCorsRequest("http://localhost:8080/requestMap?coords=" + markerString);
+
+
     var flightPlanCoordinates = [];
 
     for (ayy of markers) {
@@ -157,7 +173,7 @@ function drawLine() {
     // Removes the markers visuals
     deleteMarkers();
 
-
+// Change the display of the buttons dependant on the state
     document.getElementById("calcButton").disabled = true;
     document.getElementById("calcButton").classList.remove("btn-primary");
     document.getElementById("calcButton").classList.add("btn-secondary");
@@ -168,5 +184,137 @@ function drawLine() {
 
     mapState = 2;
     markersPlaceable = false;
+}
 
+
+//EXPERIMENTAL STUFF
+
+function addYourLocationButton(map) {
+    let controlDiv = document.createElement('div');
+
+    let firstChild = document.createElement('button');
+    firstChild.style.backgroundColor = '#fff';
+    firstChild.style.border = 'none';
+    firstChild.style.outline = 'none';
+    firstChild.style.width = '28px';
+    firstChild.style.height = '28px';
+    firstChild.style.borderRadius = '2px';
+    firstChild.style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
+    firstChild.style.cursor = 'pointer';
+    firstChild.style.marginRight = '10px';
+    firstChild.style.padding = '0px';
+    firstChild.title = 'Your Location';
+    controlDiv.appendChild(firstChild);
+
+    let secondChild = document.createElement('div');
+    secondChild.style.margin = '5px';
+    secondChild.style.width = '18px';
+    secondChild.style.height = '18px';
+    secondChild.style.backgroundImage = 'url(https://maps.gstatic.com/tactile/mylocation/mylocation-sprite-1x.png)';
+    secondChild.style.backgroundSize = '180px 18px';
+    secondChild.style.backgroundPosition = '0px 0px';
+    secondChild.style.backgroundRepeat = 'no-repeat';
+    secondChild.id = 'you_location_img';
+    firstChild.appendChild(secondChild);
+
+    google.maps.event.addListener(map, 'dragend', function () {
+        $('#you_location_img').css('background-position', '0px 0px');
+    });
+
+    firstChild.addEventListener('click', function () {
+        var imgX = '0';
+        var animationInterval = setInterval(function () {
+            if (imgX == '-18') imgX = '0';
+            else imgX = '-18';
+            $('#you_location_img').css('background-position', imgX + 'px 0px');
+        }, 500);
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                addMarker(latlng);
+                map.setCenter(latlng);
+                clearInterval(animationInterval);
+                $('#you_location_img').css('background-position', '-144px 0px');
+            });
+        }
+        else {
+            clearInterval(animationInterval);
+            $('#you_location_img').css('background-position', '0px 0px');
+        }
+    });
+
+    controlDiv.index = 1;
+    map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(controlDiv);
+}
+
+
+function addSearchBar(map) {
+    let controlDiv = document.createElement('div');
+
+    let firstChild = document.createElement('input');
+    firstChild.style.backgroundColor = '#fff';
+    firstChild.style.border = 'none';
+    firstChild.style.outline = 'none';
+    firstChild.style.width = '30vh';
+    firstChild.style.height = '28px';
+    firstChild.style.borderRadius = '2px';
+    firstChild.style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
+    firstChild.style.cursor = 'pointer';
+    firstChild.style.marginLeft = '10px';
+    firstChild.style.marginTop = '10px';
+    firstChild.style.padding = '0px';
+    firstChild.title = 'Enter Coords here';
+    firstChild.id = "pac-input";
+    firstChild.classList.add("controls");
+    firstChild.type = "text";
+    firstChild.placeholder = "  LAT, LNG";
+    controlDiv.appendChild(firstChild);
+
+
+    controlDiv.index = 1;
+    map.controls[google.maps.ControlPosition.LEFT_TOP].push(controlDiv);
+}
+
+
+// Create the XHR object.
+function createCORSRequest(method, url) {
+    var xhr = new XMLHttpRequest();
+    if ("withCredentials" in xhr) {
+        // XHR for Chrome/Firefox/Opera/Safari.
+        xhr.open(method, url, true);
+    } else if (typeof XDomainRequest != "undefined") {
+        // XDomainRequest for IE.
+        xhr = new XDomainRequest();
+        xhr.open(method, url);
+    } else {
+        // CORS not supported.
+        xhr = null;
+    }
+    return xhr;
+}
+
+
+
+// Make the actual CORS request.
+function makeCorsRequest(url) {
+    // This is a sample server that supports CORS.
+
+    var xhr = createCORSRequest('GET', url);
+    if (!xhr) {
+        alert('CORS not supported');
+        return;
+    }
+
+    // Response handlers.
+    //TODO Move this var text to global so I can access it anywhere
+    xhr.onload = function() {
+        var text = xhr.responseText;
+        alert(url + ' has returned: ' + text);
+    };
+
+    xhr.onerror = function() {
+        alert('Woops, there was an error making the request.');
+    };
+
+    xhr.send();
 }

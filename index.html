@@ -48,7 +48,7 @@
 
         <nav class="navbar navbar-expand-lg navbar-light bg-light mb-1" style="height: 10vh;">
 
-            <div class="container-fluid d-flex h-100">
+            <div class="container-fluid d-flex h-100" style="height: 100%">
                 <button type="button" id="sidebarCollapse" class="navbar-btn">
                     <span></span>
                     <span></span>
@@ -57,7 +57,8 @@
 
                 <!--Controls-->
                 <div id="floating-panel" class="btn-group text-center">
-                    <input id="calcButton" onclick="drawLine();" type=button class="btn btn-primary btn-block btn-lg" value="Calculate Route">
+                    <input id="calcButton" onclick="drawLine();" type=button class="btn btn-primary btn-block btn-lg"
+                           value="Calculate Route">
                     <input id="clearButton" onclick="deleteBoth();" type=button class="btn btn-secondary" value="Clear">
                 </div>
             </div>
@@ -81,8 +82,20 @@
 
         </div>
 
+        <div>
+            <p id="demo"></p>
+        </div>
+
     </div>
 </div>
+
+<script>
+    const userAction = async () => {
+        const response = await fetch('http://example.com/movies.json');
+        const myJson = await response.json(); //extract JSON from the http response
+// do something with myJson
+    }
+</script>
 
 
 <!-- jQuery CDN - Slim version (=without AJAX) -->
