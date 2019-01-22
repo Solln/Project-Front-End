@@ -57,7 +57,7 @@
 
                 <!--Controls-->
                 <div id="floating-panel" class="btn-group text-center">
-                    <input id="calcButton" onclick="drawLine();" type=button class="btn btn-primary btn-block btn-lg"
+                    <input id="calcButton" onclick="calculate();" type=button class="btn btn-primary btn-block btn-lg"
                            value="Calculate Route">
                     <input id="clearButton" onclick="deleteBoth();" type=button class="btn btn-secondary" value="Clear">
                 </div>
@@ -67,18 +67,8 @@
 
         <div style="margin: 0; padding: 0; height: 89vh">
 
-            <!--MAPS SECTION-->
-
             <!--The actual Map-->
             <div id="map" style="width:auto; height:100%;"></div>
-
-            <script type="text/javascript" src="mapInit.js"></script>
-
-            <script async defer
-                    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB5XEmYIWli7e56b2LbngmxY5OHWT1XFeI&callback=initMap">
-            </script>
-
-            <!--MAPS SECTION END-->
 
         </div>
 
@@ -88,6 +78,18 @@
 
     </div>
 </div>
+
+<!--Map init scripts START-->
+<script type="text/javascript" src="mapInit.js"></script>
+
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB5XEmYIWli7e56b2LbngmxY5OHWT1XFeI&callback=initMap">
+</script>
+<!--Map init scripts END-->
+
+<script type="text/javascript" src="APICall.js"></script>
+
+
 
 <script>
     const userAction = async () => {

@@ -1,20 +1,25 @@
 let map;
 let markers = [];
+let returnedCoords = [];
 let flightPath = [];
 
+// For Labeling the markers
 let labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 let labelIndex = 0;
 
+// For changing the states on the buttons and locking controls
 let mapState = 0;
-
 let markersPlaceable = true;
+
+// For the async wait required for the API call
+let timer = false;
 
 function initMap() {
 
     //Default Location
-    var startLocation = {lat: 55.8738, lng: -4.2449};
+    let startLocation = {lat: 55.8738, lng: -4.2449};
 
-    var myOptions = {
+    let myOptions = {
         zoom: 16,
         disableDefaultUI: true,
     }
@@ -46,9 +51,7 @@ function initMap() {
 function addMarker(location) {
 
     //Constructs the Marker itself
-    //TODO ADD A DRAGEND TO UPDATE INFOWINDOWS LAT LNG TO NEW CORRECT DRAGGED TO VALUES?,
-    //TODO OR POTENTIAL DONT REQUIRE THE INFOWINDOW, USE DIRECT VALUES AS DRAGGABLE SEEMS TO WORK...
-    var marker = new google.maps.Marker({
+    let marker = new google.maps.Marker({
         position: location,
         label: labels[labelIndex++ % labels.length],
         draggable: true,
@@ -76,13 +79,16 @@ function addMarker(location) {
 
 // Sets the map on all markers in the array.
 function setMapOnAll(map) {
-    for (var i = 0; i < markers.length; i++) {
+    for (let i = 0; i < markers.length; i++) {
         markers[i].setMap(map);
     }
 }
 
 // Removes both Markers and Lines from the map
 function deleteBoth() {
+
+    // resets the timer boolean used for the async stuff
+    timer = false;
 
     if (mapState === 1) {
         deleteMarkers();
@@ -106,15 +112,15 @@ function deleteBoth() {
 
 }
 
-
 // Deletes all markers in the array by removing references to them.
 function deleteMarkers() {
     setMapOnAll(null);
     markers = [];
+    returnedCoords = [];
 }
 
 // Deletes a single marker via its id
-var deleteMarker = function (id) {
+let deleteMarker = function (id) {
     var marker = markers[id];
     // Index - number of items removed
     markers.splice(id, 1)
@@ -129,34 +135,30 @@ function deleteLines() {
     flightPath = [];
 }
 
-// Draws the Polyline between all the markers in the markers array
+// Construct and execute the API Request, Timeout on the draw line to ensure the API returns a value.
+function calculate() {
+    makeAPIRequest();
+
+    //TODO ADD A CLAUSE THAT THROWS ERROR IF SET AMOUNT OF TIME PASSES
+    let interval = setInterval(function () {
+        if (timer) {
+            drawLine();
+            clearInterval(interval);
+        }
+    }, 500);
+}
+
+// Draws the Polyline between all the returned coordinates in the markers array
 function drawLine() {
 
-    // makeCorsRequest("http://localhost:8080/testReturn?name=Jack");
-
-    var fruits = ["Banana", "Orange", "Apple", "Mango"];
-    fruits.toString(); coords = ["Darren", "Jack", "David"];
-
-    let markerString = "";
-    for (mark of markers){
-        markerString = markerString + mark.getPosition().lat().toFixed(4) + ",";
-        markerString = markerString + mark.getPosition().lng().toFixed(4) + "/";
-    }
-
-    //Get the reurn from this and use it to set the coords for the flightplan
-    makeCorsRequest("http://localhost:8080/requestMap?coords=" + markerString);
-
+    console.log("drawLine starting");
 
     var flightPlanCoordinates = [];
 
-    for (ayy of markers) {
-        console.log('Label: ' + ayy.label);
-        console.log('Lat: ' + ayy.getPosition().lat().toFixed(4));
-        console.log('Lng: ' + ayy.getPosition().lng().toFixed(4));
-        console.log('---------------------')
+    for (ayy of returnedCoords) {
         flightPlanCoordinates.push({
-            lat: parseFloat(ayy.getPosition().lat().toFixed(4)),
-            lng: parseFloat(ayy.getPosition().lng().toFixed(4))
+            lat: parseFloat(ayy.lat.toFixed(4)),
+            lng: parseFloat(ayy.lng.toFixed(4))
         })
     }
 
@@ -184,6 +186,10 @@ function drawLine() {
 
     mapState = 2;
     markersPlaceable = false;
+
+    console.log("drawLine finishing");
+
+
 }
 
 
@@ -276,45 +282,3 @@ function addSearchBar(map) {
 }
 
 
-// Create the XHR object.
-function createCORSRequest(method, url) {
-    var xhr = new XMLHttpRequest();
-    if ("withCredentials" in xhr) {
-        // XHR for Chrome/Firefox/Opera/Safari.
-        xhr.open(method, url, true);
-    } else if (typeof XDomainRequest != "undefined") {
-        // XDomainRequest for IE.
-        xhr = new XDomainRequest();
-        xhr.open(method, url);
-    } else {
-        // CORS not supported.
-        xhr = null;
-    }
-    return xhr;
-}
-
-
-
-// Make the actual CORS request.
-function makeCorsRequest(url) {
-    // This is a sample server that supports CORS.
-
-    var xhr = createCORSRequest('GET', url);
-    if (!xhr) {
-        alert('CORS not supported');
-        return;
-    }
-
-    // Response handlers.
-    //TODO Move this var text to global so I can access it anywhere
-    xhr.onload = function() {
-        var text = xhr.responseText;
-        alert(url + ' has returned: ' + text);
-    };
-
-    xhr.onerror = function() {
-        alert('Woops, there was an error making the request.');
-    };
-
-    xhr.send();
-}
