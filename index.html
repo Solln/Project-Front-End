@@ -14,6 +14,9 @@
     <!-- Our Custom CSS -->
     <link rel="stylesheet" href="css/navBar.css">
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+
+
 </head>
 
 <body>
@@ -65,16 +68,32 @@
 
         </nav>
 
+        <!--Map section starting-->
         <div style="margin: 0; padding: 0; height: 89vh">
-
             <!--The actual Map-->
             <div id="map" style="width:auto; height:100%;"></div>
-
         </div>
+        <!--Map End-->
 
-        <div>
-            <p id="demo"></p>
+        <!-- Modal -->
+        <div id="myModal" class="modal fade" role="dialog" data-backdrop="false">
+            <div class="modal-dialog">
+
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Elevation Graph</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
         </div>
+        <!--Modal End-->
+
 
     </div>
 </div>
@@ -87,17 +106,8 @@
 </script>
 <!--Map init scripts END-->
 
+
 <script type="text/javascript" src="APICall.js"></script>
-
-
-
-<script>
-    const userAction = async () => {
-        const response = await fetch('http://example.com/movies.json');
-        const myJson = await response.json(); //extract JSON from the http response
-// do something with myJson
-    }
-</script>
 
 
 <!-- jQuery CDN - Slim version (=without AJAX) -->

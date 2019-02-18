@@ -44,12 +44,12 @@ function initMap() {
     });
 
     addYourLocationButton(map);
+    addElevationModalButton(map);
     addSearchBar(map);
 }
 
 // Adds a marker to the map and push to the array.
 function addMarker(location) {
-
     //Constructs the Marker itself
     let marker = new google.maps.Marker({
         position: location,
@@ -60,7 +60,9 @@ function addMarker(location) {
     markers.push(marker);
 
     marker.addListener('click', function () {
-        deleteMarker(labels.indexOf(marker.label));
+        if (markersPlaceable === true) {
+            deleteMarker(labels.indexOf(marker.label));
+        }
     });
 
 
@@ -108,6 +110,8 @@ function deleteBoth() {
     document.getElementById("clearButton").classList.remove("btn-primary");
     document.getElementById("clearButton").classList.add("btn-secondary");
 
+    document.getElementById("elevation_button").disabled = true;
+
     markersPlaceable = true;
 
 }
@@ -137,6 +141,7 @@ function deleteLines() {
 
 // Construct and execute the API Request, Timeout on the draw line to ensure the API returns a value.
 function calculate() {
+
     makeAPIRequest();
 
     //TODO ADD A CLAUSE THAT THROWS ERROR IF SET AMOUNT OF TIME PASSES
@@ -146,6 +151,9 @@ function calculate() {
             clearInterval(interval);
         }
     }, 500);
+
+    document.getElementById("elevation_button").disabled = false;
+
 }
 
 // Draws the Polyline between all the returned coordinates in the markers array
@@ -175,14 +183,15 @@ function drawLine() {
     // Removes the markers visuals
     deleteMarkers();
 
-// Change the display of the buttons dependant on the state
-    document.getElementById("calcButton").disabled = true;
-    document.getElementById("calcButton").classList.remove("btn-primary");
-    document.getElementById("calcButton").classList.add("btn-secondary");
+    // Change the display of the buttons dependant on the state
 
     document.getElementById("clearButton").disabled = false;
     document.getElementById("clearButton").classList.remove("btn-secondary");
     document.getElementById("clearButton").classList.add("btn-primary");
+
+    document.getElementById("calcButton").disabled = true;
+    document.getElementById("calcButton").classList.remove("btn-primary");
+    document.getElementById("calcButton").classList.add("btn-secondary");
 
     mapState = 2;
     markersPlaceable = false;
@@ -253,6 +262,44 @@ function addYourLocationButton(map) {
     map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(controlDiv);
 }
 
+function addElevationModalButton(map) {
+    let controlDiv = document.createElement('div');
+
+    let firstChild = document.createElement('button');
+    firstChild.id = "elevation_button";
+    firstChild.disabled = true;
+    firstChild.style.backgroundColor = '#fff';
+    firstChild.style.border = 'none';
+    firstChild.style.outline = 'none';
+    firstChild.style.width = '28px';
+    firstChild.style.height = '28px';
+    firstChild.style.borderRadius = '2px';
+    firstChild.style.boxShadow = '0 1px 4px rgba(0,0,0,0.3)';
+    firstChild.style.cursor = 'pointer';
+    firstChild.style.marginRight = '10px';
+    firstChild.style.marginTop = '10px';
+    firstChild.style.padding = '0px';
+    firstChild.title = 'Elevation Map';
+    controlDiv.appendChild(firstChild);
+
+    let secondChild = document.createElement('div');
+    secondChild.style.margin = '5px';
+    secondChild.style.width = '18px';
+    secondChild.style.height = '18px';
+    secondChild.style.background = 'url(elevationIcon.png) no-repeat center center';
+    secondChild.style.backgroundSize = "100% 100%";
+    secondChild.style.backgroundPosition = '0px 0px';
+    secondChild.style.backgroundRepeat = 'no-repeat';
+    secondChild.id = 'elevation_img';
+    firstChild.appendChild(secondChild);
+
+    firstChild.addEventListener('click', function () {
+        $('#myModal').modal('show');
+    });
+
+    controlDiv.index = 1;
+    map.controls[google.maps.ControlPosition.RIGHT_TOP].push(controlDiv);
+}
 
 function addSearchBar(map) {
     let controlDiv = document.createElement('div');
@@ -281,4 +328,36 @@ function addSearchBar(map) {
     map.controls[google.maps.ControlPosition.LEFT_TOP].push(controlDiv);
 }
 
+function buildElevationGraph() {
 
+    let xAxis = [];
+    let data = [];
+
+    for (entry of returnedCoords) {
+        xAxis.push(entry.label)
+        data.push(entry.elevation)
+    }
+
+
+    let ctxL = document.getElementById("lineChart").getContext('2d');
+    let myLineChart = new Chart(ctxL, {
+        type: 'line',
+        data: {
+            labels: xAxis,
+            datasets: [{
+                label: "Elevation",
+                data: data,
+                backgroundColor: [
+                    'rgba(105, 0, 132, .2)',
+                ],
+                borderColor: [
+                    'rgba(200, 99, 132, .7)',
+                ],
+                borderWidth: 2
+            },]
+        },
+        options: {
+            responsive: true
+        }
+    });
+}

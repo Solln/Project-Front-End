@@ -15,12 +15,13 @@ function makeAPIRequest() {
 
     console.log("Input markers: " + markerString);
 
-    //Get the reurn from this and use it to set the coords for the flightplan
+    //Get the return from this and use it to set the coords for the flightplan
     makeCorsRequest("http://localhost:8080/requestMap?coords=" + markerString);
+
+    //Spinner End
 
     console.log("makeAPIRequest finishing");
 }
-
 
 // Create the XHR object.
 function createCORSRequest(method, url) {
@@ -40,7 +41,6 @@ function createCORSRequest(method, url) {
     console.log("createCORSRequest finishing");
     return xhr;
 }
-
 
 // Make the actual CORS request.
 async function makeCorsRequest(url) {
@@ -67,23 +67,40 @@ async function makeCorsRequest(url) {
 
     xhr.send();
 
+    document.getElementById("calcButton").disabled = false;
+
     console.log("makeCorsRequest finishing");
 
 
 }
 
-
 function replaceMarkers() {
+    console.log("ReplaceMarkers Starting");
 
     deleteMarkers();
 
     let array = text.split("/");
 
+    let counter = 1;
+
     for (latlng of array) {
         if (latlng !== "") {
-            console.log("Returned latlng: " + latlng);
             let indivArray = latlng.split(",");
-            returnedCoords.push({lat: parseFloat(indivArray[0]), lng: parseFloat(indivArray[1])});
+            returnedCoords.push({label: toLetters(counter), lat: parseFloat(indivArray[0]), lng: parseFloat(indivArray[1]), elevation: indivArray[2]});
+            counter++;
         }
     }
+
+    buildElevationGraph();
+
+    console.log("ReplaceMarkers Finishing");
+
+}
+
+function toLetters(num) {
+    "use strict";
+    var mod = num % 26,
+        pow = num / 26 | 0,
+        out = mod ? String.fromCharCode(64 + mod) : (--pow, 'Z');
+    return pow ? toLetters(pow) + out : out;
 }
