@@ -101,6 +101,11 @@ a, a:hover, a:focus {
     background: #6d7fcc;
 }
 
+#sidebar ul li.selected > a {
+    color: #fff;
+    background: #4957cc;
+}
+
 
 a[data-toggle="collapse"] {
     position: relative;

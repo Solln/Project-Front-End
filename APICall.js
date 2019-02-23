@@ -7,13 +7,14 @@ let text = "";
 function makeAPIRequest() {
     console.log("makeAPIRequest starting");
 
-    let markerString = "";
+    let markerString = getSlope() + "/" + getAlgo() + ";";
+
     for (mark of markers) {
         markerString = markerString + mark.getPosition().lat().toFixed(4) + ",";
         markerString = markerString + mark.getPosition().lng().toFixed(4) + "/";
     }
 
-    console.log("Input markers: " + markerString);
+    console.log("Input: " + markerString);
 
     //Get the return from this and use it to set the coords for the flightplan
     makeCorsRequest("http://localhost:8080/requestMap?coords=" + markerString);
@@ -79,22 +80,49 @@ function replaceMarkers() {
 
     deleteMarkers();
 
-    let array = text.split("/");
-
-    let counter = 1;
-
-    for (latlng of array) {
-        if (latlng !== "") {
-            let indivArray = latlng.split(",");
-            returnedCoords.push({label: toLetters(counter), lat: parseFloat(indivArray[0]), lng: parseFloat(indivArray[1]), elevation: indivArray[2]});
-            counter++;
-        }
+    if (text.includes("No Route Found")){
+        document.getElementById("warningModalText").innerHTML = "No Valid safe route was found for these locations";
+        $('#warningModal').modal('show');
     }
+    else {
 
-    buildElevationGraph();
+        // settings[0] contains settings, [1] contains the returned coords
+        let fullReturn = text.split(";")
+        let settings = fullReturn[0].split("/");
+        let coords = fullReturn[1].split("/");
 
-    console.log("ReplaceMarkers Finishing");
+        console.log("Max incline is: " + settings[0]);
 
+        if (settings[0] > getSlope()) {
+            document.getElementById("warningModalText").innerHTML = "This route contains an area of " + settings[0] + " degrees incline";
+            $('#warningModal').modal('show');
+        }
+
+        console.log("Total Distance: " + settings[1]);
+        let distance = Number(settings[1]/1000).toFixed(2);
+        document.getElementById("eleFooterContent").innerHTML = "Total Distance: " + distance + " Km";
+
+        let counter = 1;
+
+        for (latlng of coords) {
+            if (latlng !== "") {
+                let indivArray = latlng.split(",");
+                returnedCoords.push({
+                    label: toLetters(counter),
+                    lat: parseFloat(indivArray[0]),
+                    lng: parseFloat(indivArray[1]),
+                    elevation: indivArray[2]
+                });
+                counter++;
+            }
+        }
+
+        buildElevationGraph();
+
+        console.log("Markers: " + counter);
+
+        console.log("ReplaceMarkers Finishing");
+    }
 }
 
 function toLetters(num) {
@@ -103,4 +131,16 @@ function toLetters(num) {
         pow = num / 26 | 0,
         out = mod ? String.fromCharCode(64 + mod) : (--pow, 'Z');
     return pow ? toLetters(pow) + out : out;
+}
+
+function getSlope() {
+    let x = document.getElementById("slopeSelector");
+    let slope = x.getElementsByClassName("selected")[0].value;
+    return slope;
+}
+
+function getAlgo() {
+    let x = document.getElementById("algoSelector");
+    let algo = x.getElementsByClassName("selected")[0].value;
+    return algo;
 }

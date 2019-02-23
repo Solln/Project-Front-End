@@ -87,7 +87,7 @@ function setMapOnAll(map) {
 }
 
 // Removes both Markers and Lines from the map
-function deleteBoth() {
+function clearMarkers() {
 
     // resets the timer boolean used for the async stuff
     timer = false;
@@ -125,7 +125,7 @@ function deleteMarkers() {
 
 // Deletes a single marker via its id
 let deleteMarker = function (id) {
-    var marker = markers[id];
+    let marker = markers[id];
     // Index - number of items removed
     markers.splice(id, 1)
     // find the marker by given id
@@ -149,6 +149,7 @@ function calculate() {
         if (timer) {
             drawLine();
             clearInterval(interval);
+            document.getElementById("calcButton").value = "Calculate Route";
         }
     }, 500);
 
@@ -161,7 +162,7 @@ function drawLine() {
 
     console.log("drawLine starting");
 
-    var flightPlanCoordinates = [];
+    let flightPlanCoordinates = [];
 
     for (ayy of returnedCoords) {
         flightPlanCoordinates.push({
@@ -237,15 +238,15 @@ function addYourLocationButton(map) {
     });
 
     firstChild.addEventListener('click', function () {
-        var imgX = '0';
-        var animationInterval = setInterval(function () {
+        let imgX = '0';
+        let animationInterval = setInterval(function () {
             if (imgX == '-18') imgX = '0';
             else imgX = '-18';
             $('#you_location_img').css('background-position', imgX + 'px 0px');
         }, 500);
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function (position) {
-                var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                let latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
                 addMarker(latlng);
                 map.setCenter(latlng);
                 clearInterval(animationInterval);
@@ -360,4 +361,20 @@ function buildElevationGraph() {
             responsive: true
         }
     });
+}
+
+function clearAlgo(element){
+    $('#Mesh').removeClass();
+    $('#Multi').removeClass();
+    $('#Tree').removeClass();
+    $('#TreeP').removeClass();
+    $('#Mid').removeClass();
+    element.classList.add('selected');
+}
+
+function clearSlope(element){
+    $('#20').removeClass();
+    $('#30').removeClass();
+    $('#40').removeClass();
+    element.classList.add('selected');
 }

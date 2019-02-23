@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <title>Collapsible sidebar using Bootstrap 4</title>
+    <title>Route Finder</title>
 
     <!-- Bootstrap CSS CDN -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css"
@@ -22,28 +22,61 @@
 <body>
 
 <div class="wrapper">
-    <!-- Sidebar Holder -->
+    <!-- Sidebar -->
     <nav id="sidebar">
+
+        <div id="dismiss">
+            <i class="fas fa-arrow-left"></i>
+        </div>
+
         <div class="sidebar-header">
-            <h3>Darren Lowe</h3>
+            <h3>Route Finder</h3>
         </div>
 
         <ul class="list-unstyled components">
             <li>
-                <a href="#">Map</a>
+                <a href="#slopeSelector" data-toggle="collapse" aria-expanded="false">Slope Limit</a>
+                <ul class="collapse list-unstyled" id="slopeSelector">
+                    <li id="20" value="20">
+                        <a onclick="clearSlope(document.getElementById('20'))">
+                            20</a>
+                    </li>
+                    <li id="30" class="selected" value="30">
+                        <a onclick="clearSlope(document.getElementById('30'))">
+                            30</a>
+                    </li>
+                    <li id="40" value="40">
+                        <a onclick="clearSlope(document.getElementById('40'))">
+                            40</a>
+                    </li>
+                </ul>
             </li>
             <li>
-                <a href="#">Option A</a>
-            </li>
-            <li>
-                <a href="#">Option B</a>
-            </li>
-            <li>
-                <a href="#">Settings</a>
+                <a href="#algoSelector" data-toggle="collapse" aria-expanded="false">Algorithm</a>
+                <ul class="collapse list-unstyled" id="algoSelector">
+                    <li id="Mid" value="1">
+                        <a onclick="clearAlgo(document.getElementById('Mid'))">
+                            Midpoint</a>
+                    </li>
+                    <li id="Tree" value="2">
+                        <a onclick="clearAlgo(document.getElementById('Tree'))">
+                            Tree</a>
+                    </li>
+                    <li id="TreeP" value="3">
+                        <a onclick="clearAlgo(document.getElementById('TreeP'))">
+                            Tree Plus</a>
+                    </li>
+                    <li id="Multi" value="4">
+                        <a onclick="clearAlgo(document.getElementById('Multi'))">
+                            Multi-Run</a>
+                    </li>
+                    <li id="Mesh" class="selected" value="5">
+                        <a onclick="clearAlgo(document.getElementById('Mesh'))">
+                            Mesh - Dijkstras</a>
+                    </li>
+                </ul>
             </li>
         </ul>
-
-
     </nav>
 
     <!-- Page Content Holder -->
@@ -61,8 +94,9 @@
                 <!--Controls-->
                 <div id="floating-panel" class="btn-group text-center">
                     <input id="calcButton" onclick="calculate();" type=button class="btn btn-primary btn-block btn-lg"
-                           value="Calculate Route">
-                    <input id="clearButton" onclick="deleteBoth();" type=button class="btn btn-secondary" value="Clear">
+                           value="Find Route">
+                    <input id="clearButton" onclick="clearMarkers();" type=button class="btn btn-secondary"
+                           value="Clear">
                 </div>
             </div>
 
@@ -75,7 +109,7 @@
         </div>
         <!--Map End-->
 
-        <!-- Modal -->
+        <!-- Elevation Modal -->
         <div id="myModal" class="modal fade" role="dialog" data-backdrop="false">
             <div class="modal-dialog">
 
@@ -88,11 +122,38 @@
                     <div class="modal-body">
                         <canvas id="lineChart"></canvas>
                     </div>
+                    <div class="modal-footer">
+                        <div id="eleFooterContent"></div>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
                 </div>
 
             </div>
         </div>
-        <!--Modal End-->
+        <!--Elevation Modal End-->
+
+
+        <!-- Warning Modal -->
+        <div id="warningModal" class="modal fade" role="dialog" data-backdrop="false">
+            <div class="modal-dialog">
+
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Route Warning</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="warningModalText"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!--Warning Modal End-->
 
 
     </div>
