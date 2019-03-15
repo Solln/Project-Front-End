@@ -1,15 +1,20 @@
 let map;
 let markers = [];
 let returnedCoords = [];
+let flightPathList = [];
 let flightPath = [];
 
 // For Labeling the markers
 let labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 let labelIndex = 0;
 
+let sidebarOut = false;
+
 // For changing the states on the buttons and locking controls
 let mapState = 0;
 let markersPlaceable = true;
+
+let allAlgos = false;
 
 // For the async wait required for the API call
 let timer = false;
@@ -65,6 +70,9 @@ function addMarker(location) {
         }
     });
 
+    document.getElementById("calcButton").disabled = false;
+    document.getElementById("clearButton").disabled = false;
+
 
     // Show new coords + marker index
     marker.addListener('dragend', handleEvent);
@@ -103,10 +111,11 @@ function clearMarkers() {
         mapState = 0;
     }
 
-    document.getElementById("calcButton").disabled = false;
+    document.getElementById("calcButton").disabled = true;
     document.getElementById("calcButton").classList.remove("btn-secondary");
     document.getElementById("calcButton").classList.add("btn-primary");
 
+    document.getElementById("clearButton").disabled = true;
     document.getElementById("clearButton").classList.remove("btn-primary");
     document.getElementById("clearButton").classList.add("btn-secondary");
 
@@ -135,52 +144,130 @@ let deleteMarker = function (id) {
 // Deletes Polyline
 function deleteLines() {
     //TODO Error with this if no flightpath calculated
-    flightPath.setMap(null);
+    flightPathList.forEach(function(element){
+        element.setMap(null);
+    });
+
     flightPath = [];
+    flightPathList = [];
+
 }
 
 // Construct and execute the API Request, Timeout on the draw line to ensure the API returns a value.
 function calculate() {
 
-    makeAPIRequest();
+    document.getElementById("calcButton").value = "Loading...";
+    document.getElementById("calcButton").disabled = true;
 
-    //TODO ADD A CLAUSE THAT THROWS ERROR IF SET AMOUNT OF TIME PASSES
-    let interval = setInterval(function () {
-        if (timer) {
-            drawLine();
-            clearInterval(interval);
-            document.getElementById("calcButton").value = "Calculate Route";
+
+    let outerInterval = setInterval(function () {
+
+        if (document.getElementById("calcButton").value === "Loading...") {
+
+            makeAPIRequest();
+
+            //TODO ADD A CLAUSE THAT THROWS ERROR IF SET AMOUNT OF TIME PASSES
+            let interval = setInterval(function () {
+                if (timer) {
+                    console.log("Attempting...")
+                    drawLine();
+                    clearInterval(interval);
+                    document.getElementById("calcButton").value = "Find Route";
+                }
+            }, 500);
+
+            document.getElementById("elevation_button").disabled = false;
+            clearInterval(outerInterval);
         }
+
     }, 500);
 
-    document.getElementById("elevation_button").disabled = false;
 
 }
 
 // Draws the Polyline between all the returned coordinates in the markers array
 function drawLine() {
 
-    console.log("drawLine starting");
+    // Draws multiple lines for ALL routes when returned
+    let colour = 0;
+    // RED, GREEN, BLUE, ORANGE, MAGENTA
+    let colours = ['#FF0000', '#008000', '#3366ff', '#FFA500' , '#FF00FF']
 
-    let flightPlanCoordinates = [];
+    if (text.includes("+")) {
+        let coordsSplit = text.split("+");
 
-    for (ayy of returnedCoords) {
-        flightPlanCoordinates.push({
-            lat: parseFloat(ayy.lat.toFixed(4)),
-            lng: parseFloat(ayy.lng.toFixed(4))
-        })
+        coordsSplit.forEach(function (element) {
+            let fullReturn = element.split(";")
+            let coords = fullReturn[1].split("/");
+
+            let counter = 1;
+
+            let tempCoords = [];
+
+            for (latlng of coords) {
+                if (latlng !== "") {
+                    let indivArray = latlng.split(",");
+                    tempCoords.push({
+                        label: toLetters(counter),
+                        lat: parseFloat(indivArray[0]),
+                        lng: parseFloat(indivArray[1]),
+                        elevation: indivArray[2]
+                    });
+                    counter++;
+                }
+            }
+
+            returnedCoords = tempCoords;
+
+            let flightPlanCoordinates = [];
+
+            for (ayy of returnedCoords) {
+                flightPlanCoordinates.push({
+                    lat: parseFloat(ayy.lat.toFixed(4)),
+                    lng: parseFloat(ayy.lng.toFixed(4))
+                })
+            }
+
+            flightPath = new google.maps.Polyline({
+                path: flightPlanCoordinates,
+                geodesic: true,
+                strokeColor: colours[colour],
+                strokeOpacity: 1.0,
+                strokeWeight: 2
+            });
+
+            flightPath.setMap(map);
+            flightPathList.push(flightPath);
+            flightPath = [];
+            colour++;
+        });
     }
+    // Draws a single route if returned
+    else {
+        console.log("drawLine Single Starting");
 
-    flightPath = new google.maps.Polyline({
-        path: flightPlanCoordinates,
-        geodesic: true,
-        strokeColor: '#FF0000',
-        strokeOpacity: 1.0,
-        strokeWeight: 2
-    });
+        let flightPlanCoordinates = [];
 
-    flightPath.setMap(map);
+        for (ayy of returnedCoords) {
+            flightPlanCoordinates.push({
+                lat: parseFloat(ayy.lat.toFixed(4)),
+                lng: parseFloat(ayy.lng.toFixed(4))
+            })
+        }
 
+        flightPath = new google.maps.Polyline({
+            path: flightPlanCoordinates,
+            geodesic: true,
+            strokeColor: '#FF0000',
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+        });
+
+        flightPath.setMap(map);
+        flightPathList.push(flightPath);
+        flightPath = [];
+
+    }
     // Removes the markers visuals
     deleteMarkers();
 
@@ -190,7 +277,6 @@ function drawLine() {
     document.getElementById("clearButton").classList.remove("btn-secondary");
     document.getElementById("clearButton").classList.add("btn-primary");
 
-    document.getElementById("calcButton").disabled = true;
     document.getElementById("calcButton").classList.remove("btn-primary");
     document.getElementById("calcButton").classList.add("btn-secondary");
 
@@ -201,7 +287,6 @@ function drawLine() {
 
 
 }
-
 
 //EXPERIMENTAL STUFF
 
@@ -335,14 +420,24 @@ function buildElevationGraph() {
     let data = [];
 
     for (entry of returnedCoords) {
-        xAxis.push(entry.label)
-        data.push(entry.elevation)
+        xAxis.push("");
+        data.push(entry.elevation);
     }
 
+    document.getElementById("lineChart").style.visibility = "visible";
+    document.getElementById("eleFooterContent").style.visibility = "visible";
+
+    document.getElementById("midpointInfo").style.visibility = "hidden";
+    document.getElementById("treeInfo").style.visibility = "hidden";
+    document.getElementById("treePlusInfo").style.visibility = "hidden";
+    document.getElementById("multiInfo").style.visibility = "hidden";
+    document.getElementById("meshInfo").style.visibility = "hidden";
 
     let ctxL = document.getElementById("lineChart").getContext('2d');
     let myLineChart = new Chart(ctxL, {
         type: 'line',
+        width: '600px',
+        height: '400px',
         data: {
             labels: xAxis,
             datasets: [{
@@ -363,18 +458,63 @@ function buildElevationGraph() {
     });
 }
 
-function clearAlgo(element){
+function clearAlgo(element) {
     $('#Mesh').removeClass();
     $('#Multi').removeClass();
     $('#Tree').removeClass();
     $('#TreeP').removeClass();
     $('#Mid').removeClass();
+    $('#All').removeClass();
+
     element.classList.add('selected');
+
+    if (element.id === "All") {
+        allAlgos = true;
+    }
+    else {
+        allAlgos = false;
+    }
+
+    console.log(allAlgos);
 }
 
-function clearSlope(element){
+function clearSlope(element) {
     $('#20').removeClass();
     $('#30').removeClass();
     $('#40').removeClass();
     element.classList.add('selected');
 }
+
+async function sideBarExtender() {
+
+    if ($(window).width() <= 800) {
+
+        if (document.getElementById("sidebar").classList.contains('active')) {
+            sidebarOut = true;
+        }
+        else {
+            sidebarOut = false;
+        }
+
+        console.log("Sidebar - " + sidebarOut);
+
+        await sleep(350);
+
+        if (sidebarOut === false) {
+            document.getElementById("calcButton").style.visibility = "visible";
+            document.getElementById("clearButton").style.visibility = "visible";
+        }
+        else {
+            document.getElementById("calcButton").style.visibility = "hidden";
+            document.getElementById("clearButton").style.visibility = "hidden";
+        }
+    }
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+
+

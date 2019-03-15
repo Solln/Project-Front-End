@@ -68,8 +68,6 @@ async function makeCorsRequest(url) {
 
     xhr.send();
 
-    document.getElementById("calcButton").disabled = false;
-
     console.log("makeCorsRequest finishing");
 
 
@@ -80,9 +78,44 @@ function replaceMarkers() {
 
     deleteMarkers();
 
-    if (text.includes("No Route Found")){
+    if (text.includes("No Route Found")) {
         document.getElementById("warningModalText").innerHTML = "No Valid safe route was found for these locations";
         $('#warningModal').modal('show');
+    }
+    else if (text.includes("+")) {
+        // ADD SOMETHING INTO THE CANVAS AREA RATHER THAN THE GRAPH
+        console.log("Multiple Route Return")
+
+        // 0 - Slope / 1 - Distance / 2 - Time
+
+        let distances = [];
+        let times = [];
+
+        let fullReturn = text.split("+")
+        fullReturn.forEach(function (element) {
+            let set = element.split(";")
+            let settings = set[0].split("/");
+            distances.push(settings[1]);
+            times.push(settings[2]);
+
+        });
+
+        // document.getElementById("lineChart").style.visibility = "hidden";
+        // document.getElementById("eleFooterContent").style.visibility = "hidden";
+        //
+        // document.getElementById("midpointInfo").style.visibility = "visible";
+        // document.getElementById("treeInfo").style.visibility = "visible";
+        // document.getElementById("treePlusInfo").style.visibility = "visible";
+        // document.getElementById("multiInfo").style.visibility = "visible";
+        // document.getElementById("meshInfo").style.visibility = "visible";
+        //
+        // document.getElementById("midpointInfo").innerHTML = "Midpoint (Red) - Dist: " + distances[0] + ", Time: " + times[0];
+        // document.getElementById("treeInfo").innerHTML = "Tree (Green) - Dist: " + distances[1] + ", Time: " + times[1];
+        // document.getElementById("treePlusInfo").innerHTML = "TreePlus (Blue) - Dist: " + distances[2] + ", Time: " + times[2];
+        // document.getElementById("multiInfo").innerHTML = "Multi (Orange) - Dist: " + distances[3] + ", Time: " + times[3];
+        // document.getElementById("meshInfo").innerHTML = "Mesh (Magenta) - Dist: " + distances[4] + ", Time: " + times[4];
+
+
     }
     else {
 
@@ -99,8 +132,9 @@ function replaceMarkers() {
         }
 
         console.log("Total Distance: " + settings[1]);
-        let distance = Number(settings[1]/1000).toFixed(2);
-        document.getElementById("eleFooterContent").innerHTML = "Total Distance: " + distance + " Km";
+        let distance = Number(settings[1] / 1000).toFixed(2);
+        document.getElementById("eleFooterContent").innerHTML = "Total Distance: " + distance + " Km" + "<br /> Time: " + settings[2] + " Mins";
+
 
         let counter = 1;
 
